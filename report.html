@@ -180,7 +180,6 @@
  							 
  			var MILLINDAY = 86400000;
  			var MILLINWEEK = MILLINDAY*7;
- 			
  			var MEDRISK = 80;
  			var HIGHRISK = 70;
 
@@ -276,6 +275,7 @@
 								.classed('navigator', true)
 								.attr("width", canvaswidth + canvasmargin.left + canvasmargin.right)
 				   				.attr("height", navHeight + canvasmargin.top + canvasmargin.bottom);
+				   				//.attr("transform", "translate(" + canvasmargin.left + "," + canvasmargin.top + ")");
 				navcontext = navCanvas.node().getContext("2d");
 				  
 				var position = $('.nav').offset();
@@ -494,6 +494,7 @@
 				ctx.fill();
 				
 				ctx.fillStyle='black';
+				//ctx.fillText("Low",20,34);
 				ctx.fillText("Low",115,14);
 
 				// Blue rectangle
@@ -505,7 +506,6 @@
 				ctx.fill();
 				
 				ctx.fillStyle='black';
-				ctx.fon
 				//ctx.fillText("In range",20,54);
 				ctx.fillText("In range", 175,14);
 
