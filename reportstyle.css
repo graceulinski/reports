@@ -16,6 +16,10 @@
     shape-rendering: crispEdges;
 }
 
+.axis--x path {
+  display: none;
+}
+
 #basicsettings
 {
 	padding-left:10px;
@@ -39,6 +43,11 @@
 	height:20px;
 	position:relative;
 	padding:0; margin:1%;
+}
+
+
+.bar:hover {
+  fill: brown;
 }
 
 body
@@ -160,7 +169,7 @@ body
   text-align: center;
   width:30%;
   height:30%;
-  min-height:260px;
+  min-height:310px;
   min-width:490px;
 }
 
@@ -210,6 +219,7 @@ html
 	float:left;
 	visibility:hidden;
 }
+
 
 #lowrisk
 {

@@ -24,6 +24,7 @@
 							<a href="javascript:setWeekly()"><li>WEEKLY</li></a>
 							<a href="javascript:setPie()"><li>PIE GRAPHS</li></a>
 							<a href="javascript:setBox()"><li>BOXPLOTS</li></a>
+							<a href="javascript:setGrouped()"><li>BAR GRAPH</li></a>
 						  </ul>
 						</div> 
 					</td>
@@ -44,7 +45,6 @@
 			</div>
     		<h1 id="title">TITLE OF GRAPH</h1>
     	</div>
-			<!--> TEST <-->    	
 		<div id="maindiv" class="main">
 		<button id="left" onclick="goLeft()"><<</button>
 		<button id="right" onclick="goRight()">>></button>
@@ -148,6 +148,8 @@
 			var cal = false;
 			var pie = false;
 			var box = false;
+			var bar = false;
+			var grouped = false;
 			
 			var allDates = [];
 			var allGluc = [];
@@ -182,7 +184,15 @@
  			
  			var MEDRISK = 80;
  			var HIGHRISK = 70;
-			
+ 			
+ 			var MORNINGSTART = 5;
+ 			var AFTERNOONSTART = 12;
+ 			var EVENINGSTART = 18;
+ 			var NIGHTSTART = 22;
+ 			
+ 			var HIGH = 180;
+ 			var LOW = 70;
+ 			
 			function readData()
 			{
 				var parseDate = d3.timeParse("%-m/%-d/%y %H:%M");
@@ -736,13 +746,34 @@
 					// Scale the range of the data
 					x.domain([firstDateDay, lastDateDay]);
 					y.domain([0, 400]);
+					
+					highpercent = HIGH/400*100;
+					lowpercent = LOW/400*100;
+					
+					svg.append("linearGradient")				
+						.attr("id", "line-gradient")			
+						.attr("gradientUnits", "userSpaceOnUse")	
+						.attr("x1", 0).attr("y1", y(0))			
+						.attr("x2", 0).attr("y2", y(400))		
+					  .selectAll("stop")						
+						.data([								
+						  {offset: "0", color: "red"},		
+						  {offset: lowpercent+"%", color: "red"},	
+						  {offset: lowpercent+"%", color: "black"},		
+						  {offset: highpercent+"%", color: "black"},		
+						  {offset: highpercent+"%", color: "lawngreen"},	
+						  {offset: "100%", color: "lawngreen"}	
+						])					
+					  .enter().append("stop")			
+						.attr("offset", function(d) { return d.offset; })	
+						.attr("stop-color", function(d) { return d.color; });
 
 					// Add the valueline path.
 					svg.append("path")
 						.attr("class", "line")
 						.attr("d", valueline(data))
 						.attr("fill", "none")
-						.attr('stroke', 'steelblue');
+						.attr('stroke', 'url(#line-gradient)');
 						
 					svg.append("svg:path")
 						.attr("class", "line")
@@ -1163,6 +1194,7 @@
 						"<button id='left' onclick='goLeft()'><<</button>"+
 						"<button id='right' onclick='goRight()'>>></button>"+
 						"</div>";
+				d3.selectAll('#footerstats').style("display", "block");
 				d3.selectAll('#footerstats').style("visibility", "visible");
 				d3.selectAll('.footer').style("border-top", "thin solid black");
 				overview = false;
@@ -1171,6 +1203,8 @@
 				cal = false;
 				pie = false;
 				box = false;
+				bar = false;
+				grouped = false;
 				
 				lastDateWeek = allDates[allDates.length-1];
 				lastDateWeekSec = lastDateDay.getTime();
@@ -1184,12 +1218,201 @@
 				drawDaily(allInfo);
 			}
 			
+			function setGrouped()
+			{
+				document.getElementById("maindiv").innerHTML = "<div id='maindiv' class='main'></div>";
+				overview = false;
+				daily = false;
+				weekly = false;
+				cal = false;
+				pie = false;
+				box = false;
+				bar = false;
+				grouped = true;
+				
+				lastDateWeek = allDates[allDates.length-1];
+				lastDateWeekSec = lastDateDay.getTime();
+				firstDateWeekSec = lastDateWeekSec-MILLINWEEK;
+				firstDateWeek = new Date(firstDateWeekSec);
+				document.getElementById("navbrush").innerHTML = "";
+				closeNav();
+				drawGrouped();
+			}
+			
+			function drawGrouped()
+			{
+				document.getElementById("maindiv").innerHTML = "<div id='maindiv' class='main'></div>";
+				document.getElementById('title').innerHTML = "Bar Graphs";
+				d3.selectAll('#footerstats').style("display", "none");
+				d3.selectAll('.footer').style("border-top", "none");
+				document.getElementById("navbrush").innerHTML = "";
+				
+				var labels = false; // show the text labels beside individual boxplots?
+
+				var w = window.innerWidth
+				|| document.documentElement.clientWidth
+				|| document.body.clientWidth;
+
+				var h = window.innerHeight
+				|| document.documentElement.clientHeight
+				|| document.body.clientHeight;
+
+				var margin = {top: 10, right: 30, bottom: 50, left: 50};
+				var  width = w - margin.left - margin.right;
+				var height = .9*h - margin.top - margin.bottom;
+				
+				var chartWidth, chartHeight
+				var svg = d3.select(".main").append("svg")
+				var axisLayer = svg.append("g").classed("axisLayer", true)
+				var chartLayer = svg.append("g").classed("chartLayer", true)
+	
+	
+				var xScale = d3.scaleBand()
+		
+		
+	
+				var xInScale = d3.scaleBand();
+	
+				var yScale = d3.scaleLinear()
+	
+				var color = d3.scaleOrdinal(["#E1FEA4", "#437D8B", "#02093F", "#040203"])
+
+				labels = ["Sun", "Mon", "Tue", "Wed", "Thur", "Fri", "Sat"];
+				nested = [];
+				maxval = 0;
+				for(var i = 0; i < 7; i ++)
+				{
+					morning1 = allInfo.filter(function (el) 
+					{
+						return el.date.getDay() == i && el.date.getHours() >= MORNINGSTART && el.date.getHours() <AFTERNOONSTART;
+					});
+					morning2 = allCalInfo.filter(function (el) 
+					{
+						return el.date.getDay() == i && el.date.getHours() >= MORNINGSTART && el.date.getHours() <AFTERNOONSTART;
+					});
+					
+					afternoon1 = allInfo.filter(function (el) 
+					{
+						return el.date.getDay() == i && el.date.getHours() >= AFTERNOONSTART && el.date.getHours() <EVENINGSTART;
+					});
+					afternoon2 = allCalInfo.filter(function (el) 
+					{
+						return el.date.getDay() == i && el.date.getHours() >= AFTERNOONSTART && el.date.getHours() <EVENINGSTART;
+					});
+					
+					evening1 = allInfo.filter(function (el) 
+					{
+						return el.date.getDay() == i && el.date.getHours() >= EVENINGSTART && el.date.getHours() < NIGHTSTART;
+					});
+					evening2 = allCalInfo.filter(function (el) 
+					{
+						return el.date.getDay() == i && el.date.getHours() >= EVENINGSTART && el.date.getHours() < NIGHTSTART;
+					});
+					
+					night1 = allInfo.filter(function (el) 
+					{
+						return el.date.getDay() == i && (el.date.getHours() >= NIGHTSTART || el.date.getHours() < MORNINGSTART);
+					});
+					night2 = allCalInfo.filter(function (el) 
+					{
+						return el.date.getDay() == i && (el.date.getHours() >= NIGHTSTART || el.date.getHours() < MORNINGSTART);
+					});
+					
+					morningavg = d3.mean(morning1.concat(morning2),function(d) { return +d.glucose})
+					afternoonavg = d3.mean(afternoon1.concat(afternoon1),function(d) { return +d.glucose})
+					eveningavg = d3.mean(evening1.concat(evening2),function(d) { return +d.glucose})
+					nightavg = d3.mean(night1.concat(night2),function(d) { return +d.glucose})
+					maxval = d3.max([maxval, morningavg, afternoonavg, nightavg]);
+					nested.push({age:[{key: 0, value:morningavg}, {key: 1, value:afternoonavg}, {key: 2, value:eveningavg}, {key: 3, value:nightavg}], key:labels[i], 
+							value:{0:morningavg, 1:afternoonavg, 2:eveningavg, 3:nightavg}});
+				}
+		
+				chartWidth = width - (margin.left+margin.right)
+				chartHeight = height - (margin.top+margin.bottom)
+	
+				svg.attr("width", width).attr("height", height)
+	
+				axisLayer.attr("width", width).attr("height", height)
+	
+				chartLayer
+					.attr("width", chartWidth)
+					.attr("height", chartHeight)
+					.attr("transform", "translate("+[margin.left, margin.top]+")")
+		
+	
+			
+				xScale.domain(nested.map(function(d) {return d.key }))
+					.range([0, chartWidth]).paddingInner(0.1)
+	
+				var ageNames = Object.keys(nested[0].value)
+				xInScale.domain(ageNames).range([0, xScale.bandwidth()])
+	
+				var yMax = maxval;
+
+				yScale.domain([0, yMax]).range([chartHeight, 0])
+
+				var yAxis = d3.axisLeft(yScale)
+		
+				axisLayer.append("g")
+					.attr("transform", "translate("+[margin.left-1, margin.top]+")")
+					.attr("class", "axis y")
+					.call(yAxis);
+					
+				svg.append("text")
+						.attr("transform", "rotate(-90)")
+						.attr("class", "label")
+						.attr("y", (15))
+						.attr("x",-chartHeight/2 + 20)
+						.style("text-anchor", "end")
+						.text("Average Glucose (mg/dL)");
+		
+				var xAxis = d3.axisBottom(xScale)
+
+				axisLayer.append("g")
+					.attr("class", "axis x")
+					.attr("transform", "translate("+[margin.left, chartHeight+10]+")")
+					.call(xAxis);
+	
+				var t = d3.transition()
+					.duration(1000)
+					.ease(d3.easeLinear)
+
+	
+				var contry = chartLayer.selectAll(".contry")
+					.data(nested)
+		
+				var newCountry = contry.enter().append("g").attr("class", "contry")
+	
+
+				contry.merge(newCountry)
+					.attr("transform", function(d) { return "translate(" + [xScale(d.key), 0] + ")"; });
+
+	
+				var bar = newCountry.selectAll(".bar")
+					.data(function(d){ return d.age })
+
+				var newBar = bar.enter().append("rect").attr("class", "bar")
+
+					
+				bar.merge(newBar)
+					.attr("width", xInScale.bandwidth())
+					.attr("height", 0)
+					.attr("fill", function(d) {return color(d.key); })
+					.attr("transform", function(d) { return "translate(" + [xInScale(d.key)+1, chartHeight-1] + ")" })
+
+			   bar.merge(newBar).transition(t)
+					.attr("height", function(d) { return chartHeight - yScale(d.value); })
+					.attr("transform", function(d) { return "translate(" + [xInScale(d.key)+1, yScale(d.value)-1] + ")" })
+
+			}
+			
 			function setOverview()
 			{
 				document.getElementById("maindiv").innerHTML = "<div id='maindiv' class='main'>" +
 						"<button id='left' onclick='goLeft()'><<</button>"+
 						"<button id='right' onclick='goRight()'>>></button>"+
 						"</div>";
+				d3.selectAll('#footerstats').style("display", "block");
 				d3.selectAll('#footerstats').style("visibility", "visible");
 				d3.selectAll('.footer').style("border-top", "thin solid black");
 				overview = true;
@@ -1198,6 +1421,8 @@
 				cal = false;
 				pie = false;
 				box = false;
+				bar = false;
+				grouped = false;
 				
 				lastDateDay = allDates[allDates.length-1];
 				lastDaySec = lastDateDay.getTime();
@@ -1222,12 +1447,16 @@
 						"<button id='left' onclick='goLeft()'><<</button>"+
 						"<button id='right' onclick='goRight()'>>></button>"+
 						"</div>";
+				d3.selectAll('#footerstats').style("display", "none");
+				d3.selectAll('.footer').style("border-top", "none");
 				overview = false;
 				daily = false;
 				weekly = false;
 				cal = false;
 				pie = true;
 				box = false;
+				bar = false;
+				grouped = false;
 				
 				lastDateDay = allDates[allDates.length-1];
 				lastDaySec = lastDateDay.getTime();
@@ -1252,12 +1481,16 @@
 						"<button id='left' onclick='goLeft()'><<</button>"+
 						"<button id='right' onclick='goRight()'>>></button>"+
 						"</div>";
+				d3.selectAll('#footerstats').style("display", "none");
+				d3.selectAll('.footer').style("border-top", "none");
 				overview = false;
 				daily = false;
 				weekly = false;
 				cal = false;
 				pie = false;
 				box = true;
+				bar = false;
+				grouped = false;
 				
 				lastDateDay = allDates[allDates.length-1];
 				lastDaySec = lastDateDay.getTime();
@@ -1491,6 +1724,7 @@
 						"<button id='left' onclick='goLeft()'><<</button>"+
 						"<button id='right' onclick='goRight()'>>></button>"+
 						"</div>";
+				d3.selectAll('#footerstats').style("display", "block");
 				d3.selectAll('#footerstats').style("visibility", "visible");
 				d3.selectAll('.footer').style("border-top", "thin solid black");
 				overview = false;
@@ -1499,6 +1733,7 @@
 				cal = false;
 				pie = false;
 				box = false;
+				bar = false;
 				
 				lastDateDay = allDates[allDates.length-1];
 				lastDaySec = lastDateDay.getTime();
@@ -1519,6 +1754,7 @@
 						"<button id='left' onclick='goLeft()'><<</button>"+
 						"<button id='right' onclick='goRight()'>>></button>"+
 						"</div>";
+				d3.selectAll('#footerstats').style("display", "block");
 				d3.selectAll('#footerstats').style("visibility", "visible");
 				d3.selectAll('.footer').style("border-top", "thin solid black");
 				overview = false;
@@ -1527,6 +1763,8 @@
 				cal = true;
 				pie = false;
 				box = false;
+				bar = false;
+				grouped = false;
 
 				lastDateDay = allDates[allDates.length-1];
 				lastDaySec = lastDateDay.getTime();
@@ -1677,6 +1915,10 @@
 					drawCal(allInfo);
 				else if(box)
 					drawBox();
+				else if(bar)
+					drawBar();
+				else if(grouped)
+					drawGrouped();
 				//drawPieGraphs();
 			}
 			
@@ -1848,7 +2090,7 @@
             var outerRadius = d3CalendarGlobals.cellWidth / 3;
             var innerRadius = 0;
             var pie = d3.pie();
-            var color =  d3.scaleOrdinal(d3.schemeCategory10);
+            var color =  d3.scaleOrdinal(["red", "blue", "pink"]);
             var arc = d3.arc().innerRadius(innerRadius).outerRadius(outerRadius);
             // We need to index and group the pie charts and slices generated so that they can be rendered in
             // the appropriate cells. To do that, we call D3's 'pie' function of each of the data elements.
