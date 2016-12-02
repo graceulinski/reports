@@ -150,7 +150,7 @@
 			var box = false;
 			var bar = false;
 			var grouped = false;
-			
+
 			var allDates = [];
 			var allGluc = [];
 			var allInfo = [];
@@ -161,7 +161,6 @@
 			var allCalDates = [];
 			var allCalGluc = [];
 			var allCalInfo = [];
-			
 			var lastDateDay=0;
 			var firstDateDay=0;
 			var maxDateSec = 0;
@@ -181,18 +180,17 @@
  							 
  			var MILLINDAY = 86400000;
  			var MILLINWEEK = MILLINDAY*7;
- 			
  			var MEDRISK = 80;
  			var HIGHRISK = 70;
- 			
+
  			var MORNINGSTART = 5;
  			var AFTERNOONSTART = 12;
  			var EVENINGSTART = 18;
  			var NIGHTSTART = 22;
- 			
+
  			var HIGH = 180;
  			var LOW = 70;
- 			
+
 			function readData()
 			{
 				var parseDate = d3.timeParse("%-m/%-d/%y %H:%M");
@@ -277,6 +275,7 @@
 								.classed('navigator', true)
 								.attr("width", canvaswidth + canvasmargin.left + canvasmargin.right)
 				   				.attr("height", navHeight + canvasmargin.top + canvasmargin.bottom);
+				   				//.attr("transform", "translate(" + canvasmargin.left + "," + canvasmargin.top + ")");
 				navcontext = navCanvas.node().getContext("2d");
 				  
 				var position = $('.nav').offset();
@@ -446,13 +445,20 @@
 				document.getElementById('title').innerHTML = "Time in Range";
 				d3.selectAll('#footerstats').style("visibility", "hidden");
 				d3.selectAll('.footer').style("border-top", "none");
+
 				document.getElementById("maindiv").innerHTML =  "<div>"+
         				"<button id='back' name='back' ><</button>"+
         				"<button id='forward' name='forward' >></button>"+
-        				"<button id='key' name='key' onclick='clickKey()'>Key</button>"+
         				"<label id='currentMonth'>May 2013</label>"+
+        				"<br/>"+
+        				"<div id='key'>"+
+        				"<canvas id='keyCanvas' width='300' height='20'></canvas>"+
+        				"</div>"+
     					"</div><div id='chart'></div>";
-				document.getElementById("navbrush").innerHTML = "";
+    			document.getElementById("currentMonth").style.fontSize = "large";
+    			document.getElementById("navbrush").innerHTML = "";
+
+    			makekey();
 				renderCalendarGrid();
 				renderDaysOfMonth();
 				$('#back').click(displayPreviousMonth);
@@ -460,49 +466,48 @@
 			
 			}
 			
-			function clickKey()
+			function makekey()
 			{
-				var myWindow = window.open("", "Key", "width=200,height=100");
-				myWindow.document.write("<!DOCTYPE html>"+
-						"<html>"+
-						"<body>"+
-						"<canvas id='myCanvas' width='150' height='70'>"+
-						"</canvas>"+
-						"</body>"+
-						"</html>");
-				
-				var c=myWindow.document.getElementById('myCanvas');
+    			var c=document.getElementById("keyCanvas");
 				var ctx=c.getContext('2d');
+
+				ctx.font='bold 13px Arial';
+				ctx.fillStyle='black';
+				ctx.fillText("Key:",5,14);
+
+				// Orange rectangle
+				ctx.beginPath();
+				ctx.lineWidth='1';
+				ctx.fillStyle=d3.schemeCategory10[1];
+				ctx.rect(40,5,10,10);
+				ctx.fill();
+				
+				ctx.fillStyle='black';
+				ctx.fillText("High",55,14);
 
 				// Red rectangle
 				ctx.beginPath();
 				ctx.lineWidth='1';
-				ctx.fillStyle=d3.schemeCategory10[2];
-				ctx.rect(5,5,10,10); 
+				ctx.fillStyle=d3.schemeCategory10[3];
+				//ctx.rect(5,25,10,10);
+				ctx.rect(100,5,10,10);
 				ctx.fill();
 				
 				ctx.fillStyle='black';
-				ctx.fillText("High",20,14);
-
-				// Green rectangle
-				ctx.beginPath();
-				ctx.lineWidth='1';
-				ctx.fillStyle=d3.schemeCategory10[1];
-				ctx.rect(5,25,10,10); 
-				ctx.fill();
-				
-				ctx.fillStyle='black';
-				ctx.fillText("Low",20,34);
+				//ctx.fillText("Low",20,34);
+				ctx.fillText("Low",115,14);
 
 				// Blue rectangle
 				ctx.beginPath();
 				ctx.lineWidth='1';
-				ctx.fillStyle= d3.schemeCategory10[0];
-				ctx.rect(5,45,10,10); 
+				ctx.fillStyle= d3.schemeCategory10[9];
+				//ctx.rect(5,45,10,10);
+				ctx.rect(160,5,10,10);
 				ctx.fill();
 				
 				ctx.fillStyle='black';
-				ctx.fillText("In range",20,54);
+				//ctx.fillText("In range",20,54);
+				ctx.fillText("In range", 175,14);
 
 			}
 			
@@ -746,26 +751,26 @@
 					// Scale the range of the data
 					x.domain([firstDateDay, lastDateDay]);
 					y.domain([0, 400]);
-					
+
 					highpercent = HIGH/400*100;
 					lowpercent = LOW/400*100;
-					
-					svg.append("linearGradient")				
-						.attr("id", "line-gradient")			
-						.attr("gradientUnits", "userSpaceOnUse")	
-						.attr("x1", 0).attr("y1", y(0))			
-						.attr("x2", 0).attr("y2", y(400))		
-					  .selectAll("stop")						
-						.data([								
-						  {offset: "0", color: "red"},		
-						  {offset: lowpercent+"%", color: "red"},	
-						  {offset: lowpercent+"%", color: "black"},		
-						  {offset: highpercent+"%", color: "black"},		
-						  {offset: highpercent+"%", color: "lawngreen"},	
-						  {offset: "100%", color: "lawngreen"}	
-						])					
-					  .enter().append("stop")			
-						.attr("offset", function(d) { return d.offset; })	
+
+					svg.append("linearGradient")
+						.attr("id", "line-gradient")
+						.attr("gradientUnits", "userSpaceOnUse")
+						.attr("x1", 0).attr("y1", y(0))
+						.attr("x2", 0).attr("y2", y(400))
+					  .selectAll("stop")
+						.data([
+						  {offset: "0", color: "red"},
+						  {offset: lowpercent+"%", color: "red"},
+						  {offset: lowpercent+"%", color: "black"},
+						  {offset: highpercent+"%", color: "black"},
+						  {offset: highpercent+"%", color: "lawngreen"},
+						  {offset: "100%", color: "lawngreen"}
+						])
+					  .enter().append("stop")
+						.attr("offset", function(d) { return d.offset; })
 						.attr("stop-color", function(d) { return d.color; });
 
 					// Add the valueline path.
@@ -1205,7 +1210,7 @@
 				box = false;
 				bar = false;
 				grouped = false;
-				
+
 				lastDateWeek = allDates[allDates.length-1];
 				lastDateWeekSec = lastDateDay.getTime();
 				firstDateWeekSec = lastDateWeekSec-MILLINWEEK;
@@ -1229,7 +1234,7 @@
 				box = false;
 				bar = false;
 				grouped = true;
-				
+
 				lastDateWeek = allDates[allDates.length-1];
 				lastDateWeekSec = lastDateDay.getTime();
 				firstDateWeekSec = lastDateWeekSec-MILLINWEEK;
@@ -1238,7 +1243,7 @@
 				closeNav();
 				drawGrouped();
 			}
-			
+
 			function drawGrouped()
 			{
 				document.getElementById("maindiv").innerHTML = "<div id='maindiv' class='main'></div>";
@@ -1246,7 +1251,7 @@
 				d3.selectAll('#footerstats').style("display", "none");
 				d3.selectAll('.footer').style("border-top", "none");
 				document.getElementById("navbrush").innerHTML = "";
-				
+
 				var labels = false; // show the text labels beside individual boxplots?
 
 				var w = window.innerWidth
@@ -1260,21 +1265,21 @@
 				var margin = {top: 10, right: 30, bottom: 50, left: 50};
 				var  width = w - margin.left - margin.right;
 				var height = .9*h - margin.top - margin.bottom;
-				
+
 				var chartWidth, chartHeight
 				var svg = d3.select(".main").append("svg")
 				var axisLayer = svg.append("g").classed("axisLayer", true)
 				var chartLayer = svg.append("g").classed("chartLayer", true)
-	
-	
+
+
 				var xScale = d3.scaleBand()
-		
-		
-	
+
+
+
 				var xInScale = d3.scaleBand();
-	
+
 				var yScale = d3.scaleLinear()
-	
+
 				var color = d3.scaleOrdinal(["#E1FEA4", "#437D8B", "#02093F", "#040203"])
 
 				labels = ["Sun", "Mon", "Tue", "Wed", "Thur", "Fri", "Sat"];
@@ -1282,82 +1287,82 @@
 				maxval = 0;
 				for(var i = 0; i < 7; i ++)
 				{
-					morning1 = allInfo.filter(function (el) 
+					morning1 = allInfo.filter(function (el)
 					{
 						return el.date.getDay() == i && el.date.getHours() >= MORNINGSTART && el.date.getHours() <AFTERNOONSTART;
 					});
-					morning2 = allCalInfo.filter(function (el) 
+					morning2 = allCalInfo.filter(function (el)
 					{
 						return el.date.getDay() == i && el.date.getHours() >= MORNINGSTART && el.date.getHours() <AFTERNOONSTART;
 					});
-					
-					afternoon1 = allInfo.filter(function (el) 
+
+					afternoon1 = allInfo.filter(function (el)
 					{
 						return el.date.getDay() == i && el.date.getHours() >= AFTERNOONSTART && el.date.getHours() <EVENINGSTART;
 					});
-					afternoon2 = allCalInfo.filter(function (el) 
+					afternoon2 = allCalInfo.filter(function (el)
 					{
 						return el.date.getDay() == i && el.date.getHours() >= AFTERNOONSTART && el.date.getHours() <EVENINGSTART;
 					});
-					
-					evening1 = allInfo.filter(function (el) 
+
+					evening1 = allInfo.filter(function (el)
 					{
 						return el.date.getDay() == i && el.date.getHours() >= EVENINGSTART && el.date.getHours() < NIGHTSTART;
 					});
-					evening2 = allCalInfo.filter(function (el) 
+					evening2 = allCalInfo.filter(function (el)
 					{
 						return el.date.getDay() == i && el.date.getHours() >= EVENINGSTART && el.date.getHours() < NIGHTSTART;
 					});
-					
-					night1 = allInfo.filter(function (el) 
+
+					night1 = allInfo.filter(function (el)
 					{
 						return el.date.getDay() == i && (el.date.getHours() >= NIGHTSTART || el.date.getHours() < MORNINGSTART);
 					});
-					night2 = allCalInfo.filter(function (el) 
+					night2 = allCalInfo.filter(function (el)
 					{
 						return el.date.getDay() == i && (el.date.getHours() >= NIGHTSTART || el.date.getHours() < MORNINGSTART);
 					});
-					
+
 					morningavg = d3.mean(morning1.concat(morning2),function(d) { return +d.glucose})
 					afternoonavg = d3.mean(afternoon1.concat(afternoon1),function(d) { return +d.glucose})
 					eveningavg = d3.mean(evening1.concat(evening2),function(d) { return +d.glucose})
 					nightavg = d3.mean(night1.concat(night2),function(d) { return +d.glucose})
 					maxval = d3.max([maxval, morningavg, afternoonavg, nightavg]);
-					nested.push({age:[{key: 0, value:morningavg}, {key: 1, value:afternoonavg}, {key: 2, value:eveningavg}, {key: 3, value:nightavg}], key:labels[i], 
+					nested.push({age:[{key: 0, value:morningavg}, {key: 1, value:afternoonavg}, {key: 2, value:eveningavg}, {key: 3, value:nightavg}], key:labels[i],
 							value:{0:morningavg, 1:afternoonavg, 2:eveningavg, 3:nightavg}});
 				}
-		
+
 				chartWidth = width - (margin.left+margin.right)
 				chartHeight = height - (margin.top+margin.bottom)
-	
+
 				svg.attr("width", width).attr("height", height)
-	
+
 				axisLayer.attr("width", width).attr("height", height)
-	
+
 				chartLayer
 					.attr("width", chartWidth)
 					.attr("height", chartHeight)
 					.attr("transform", "translate("+[margin.left, margin.top]+")")
-		
-	
-			
+
+
+
 				xScale.domain(nested.map(function(d) {return d.key }))
 					.range([0, chartWidth]).paddingInner(0.1)
-	
+
 				var ageNames = Object.keys(nested[0].value)
 				xInScale.domain(ageNames).range([0, xScale.bandwidth()])
-	
+
 				var yMax = maxval;
 
 				yScale.domain([0, yMax]).range([chartHeight, 0])
 
 				var yAxis = d3.axisLeft(yScale)
-		
+
 				axisLayer.append("g")
 					.attr("transform", "translate("+[margin.left-1, margin.top]+")")
 					.attr("class", "axis y")
 					.call(yAxis);
-					
+
 				svg.append("text")
 						.attr("transform", "rotate(-90)")
 						.attr("class", "label")
@@ -1365,35 +1370,35 @@
 						.attr("x",-chartHeight/2 + 20)
 						.style("text-anchor", "end")
 						.text("Average Glucose (mg/dL)");
-		
+
 				var xAxis = d3.axisBottom(xScale)
 
 				axisLayer.append("g")
 					.attr("class", "axis x")
 					.attr("transform", "translate("+[margin.left, chartHeight+10]+")")
 					.call(xAxis);
-	
+
 				var t = d3.transition()
 					.duration(1000)
 					.ease(d3.easeLinear)
 
-	
+
 				var contry = chartLayer.selectAll(".contry")
 					.data(nested)
-		
+
 				var newCountry = contry.enter().append("g").attr("class", "contry")
-	
+
 
 				contry.merge(newCountry)
 					.attr("transform", function(d) { return "translate(" + [xScale(d.key), 0] + ")"; });
 
-	
+
 				var bar = newCountry.selectAll(".bar")
 					.data(function(d){ return d.age })
 
 				var newBar = bar.enter().append("rect").attr("class", "bar")
 
-					
+
 				bar.merge(newBar)
 					.attr("width", xInScale.bandwidth())
 					.attr("height", 0)
@@ -1405,7 +1410,7 @@
 					.attr("transform", function(d) { return "translate(" + [xInScale(d.key)+1, yScale(d.value)-1] + ")" })
 
 			}
-			
+
 			function setOverview()
 			{
 				document.getElementById("maindiv").innerHTML = "<div id='maindiv' class='main'>" +
@@ -1423,7 +1428,7 @@
 				box = false;
 				bar = false;
 				grouped = false;
-				
+
 				lastDateDay = allDates[allDates.length-1];
 				lastDaySec = lastDateDay.getTime();
 				dayBeforeSec = lastDaySec-MILLINDAY;
@@ -1457,7 +1462,7 @@
 				box = false;
 				bar = false;
 				grouped = false;
-				
+
 				lastDateDay = allDates[allDates.length-1];
 				lastDaySec = lastDateDay.getTime();
 				dayBeforeSec = lastDaySec-MILLINDAY;
@@ -1491,7 +1496,7 @@
 				box = true;
 				bar = false;
 				grouped = false;
-				
+
 				lastDateDay = allDates[allDates.length-1];
 				lastDaySec = lastDateDay.getTime();
 				dayBeforeSec = lastDaySec-MILLINDAY;
@@ -1734,7 +1739,7 @@
 				pie = false;
 				box = false;
 				bar = false;
-				
+
 				lastDateDay = allDates[allDates.length-1];
 				lastDaySec = lastDateDay.getTime();
 				dayBeforeSec = lastDaySec-MILLINDAY;
@@ -1913,6 +1918,10 @@
 					drawWeekly(allInfo);
 				else if(cal)
 					drawCal(allInfo);
+				else if (pie)
+				{
+					setPie();
+				}
 				else if(box)
 					drawBox();
 				else if(bar)
@@ -1924,12 +1933,17 @@
 			
 			readData();
 			window.addEventListener("resize", redraw);
-			
-			
+
 			// Revealing module pattern to store some global data that will be shared between different functions.
         var d3CalendarGlobals = function() {
-            var calendarWidth = 1380, 
-            calendarHeight = 820,
+            //var calendarWidth = 1380,
+            var calendarw = window.innerWidth
+            		|| document.documentElement.clientWidth
+            		|| document.body.clientWidth,
+            //calendarHeight = 820,
+            calendarh = window.innerHeight
+            		|| document.documentElement.clientHeight
+            		|| document.body.clientHeight,
             gridXTranslation = 10,
             gridYTranslation = 40,
             cellColorForCurrentMonth = '#EAEAEA',
@@ -1938,13 +1952,27 @@
             currentMonth = new Date().getMonth(),
             monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
             datesGroup;
+            var calendarmargin = {top: 40, right: 90, bottom: 40, left: 90},
+            	calendarWidth = calendarw - calendarmargin.left - calendarmargin.right,
+            	calendarHeight = calendarh - calendarmargin.top - calendarmargin.bottom;
 
-            function publicCalendarWidth() { return calendarWidth; }
-            function publicCalendarHeight() { return calendarHeight; }
+            function publicCalendarWidth() {
+            	calendarw = window.innerWidth
+            		|| document.documentElement.clientWidth
+            		|| document.body.clientWidth;
+            		calendarWidth = calendarw - calendarmargin.left - calendarmargin.right;
+            		 return calendarWidth; }
+            function publicCalendarHeight() {
+            	calendarh = window.innerHeight
+            		|| document.documentElement.clientHeight
+            		|| document.body.clientHeight;
+            		calendarHeight = calendarh - calendarmargin.top - calendarmargin.bottom;
+            		console.log("HEIGHT: ", calendarHeight);
+            		 return calendarHeight; }
             function publicGridXTranslation() { return gridXTranslation; }
             function publicGridYTranslation() { return gridYTranslation; }
-            function publicGridWidth() { return calendarWidth - 10; }
-            function publicGridHeight() { return calendarHeight - 40; }
+            function publicGridWidth() { return calendarWidth -10; }
+            function publicGridHeight() { return calendarHeight -40; }
             function publicCellWidth() { return publicGridWidth() / 7; }
             function publicCellHeight() { return publicGridHeight() / 5; }
             function publicGetDatesGroup() {
@@ -2017,14 +2045,14 @@
             }
 
             return {
-                calendarWidth: publicCalendarWidth(),
-                calendarHeight: publicCalendarHeight(),
+                calendarWidth: publicCalendarWidth,
+                calendarHeight: publicCalendarHeight,
                 gridXTranslation :publicGridXTranslation(),
                 gridYTranslation :publicGridYTranslation(),
                 gridWidth :publicGridWidth(),
                 gridHeight :publicGridHeight(),
-                cellWidth :publicCellWidth(),
-                cellHeight :publicCellHeight(),
+                cellWidth :publicCellWidth,
+                cellHeight :publicCellHeight,
                 getDatesGroup : publicGetDatesGroup,
                 setDatesGroup: publicSetDatesGroup,
                 incrementCounter : publicIncrementCounter,
@@ -2032,7 +2060,7 @@
                 monthToDisplay : publicMonthToDisplay(),
                 monthToDisplayAsText : publicMonthToDisplayAsText,
                 yearToDisplay: publicYearToDisplay,
-                gridCellPositions: publicGridCellPositions(),
+                gridCellPositions: publicGridCellPositions,
                 daysInMonth : publicDaysInMonth
             }
         }();
@@ -2056,7 +2084,7 @@
             // We get the days for the month we need to display based on the number of times the user has pressed
             // the forward or backward button.
             var daysInMonthToDisplay = d3CalendarGlobals.daysInMonth();
-            var cellPositions = d3CalendarGlobals.gridCellPositions;
+            var cellPositions = d3CalendarGlobals.gridCellPositions();
 
             // All text elements representing the dates in the month are grouped together in the "datesGroup" element by the initalizing
             // function below. The initializing function is also responsible for drawing the rectangles that make up the grid.
@@ -2087,10 +2115,11 @@
             var data = getDataForMonth();
             
             // Set up variables required to draw a pie chart
-            var outerRadius = d3CalendarGlobals.cellWidth / 3;
+            var outerRadius = Math.min(d3CalendarGlobals.cellWidth(),d3CalendarGlobals.cellHeight()) / 3;
             var innerRadius = 0;
             var pie = d3.pie();
-            var color =  d3.scaleOrdinal(["red", "blue", "pink"]);
+            var piececolor = ["#5bc0de","#f0ad4e","#d9534f"];
+            var color =  d3.scaleOrdinal(piececolor);
             var arc = d3.arc().innerRadius(innerRadius).outerRadius(outerRadius);
             // We need to index and group the pie charts and slices generated so that they can be rendered in
             // the appropriate cells. To do that, we call D3's 'pie' function of each of the data elements.
@@ -2111,7 +2140,7 @@
 						.attr("class", "tooltip")
 						.style("opacity", 0);
             
-            var cellPositions = d3CalendarGlobals.gridCellPositions;
+            var cellPositions = d3CalendarGlobals.gridCellPositions();
 
             d3CalendarGlobals.chartsGroup
                     .selectAll("g.arc")
@@ -2197,6 +2226,7 @@
 				});
 				var all = data.concat(data2);
 				var length = all.length;
+				//console.log("LENGTH: ",length);
 				var inrange = 0;
 				var highrange = 0;
 				var lowrange = 0;
@@ -2239,12 +2269,12 @@
             d3CalendarGlobals.calendar = d3.select("#chart")
                          .append("svg")
                          .attr("class", "calendar")
-                         .attr("width", d3CalendarGlobals.calendarWidth )
-                         .attr("height", d3CalendarGlobals.calendarHeight)
+                         .attr("width", d3CalendarGlobals.calendarWidth())
+                         .attr("height", d3CalendarGlobals.calendarHeight())
                          .append("g");
-
+             console.log("RENDERING CAL: ", d3CalendarGlobals.calendarHeight());
             // Cell positions are generated and stored globally because they are used by other functions as a reference to render different things.
-            var cellPositions = d3CalendarGlobals.gridCellPositions;
+            var cellPositions = d3CalendarGlobals.gridCellPositions();
 
             // Draw rectangles at the appropriate postions, starting from the top left corner. Since we want to leave some room for the heading and buttons,
             // use the gridXTranslation and gridYTranslation variables.
@@ -2254,8 +2284,8 @@
                     .append("rect")
                     .attr("x", function (d) { return d[0]; })
                     .attr("y", function (d) { return d[1]; })
-                    .attr("width", d3CalendarGlobals.cellWidth)
-                    .attr("height", d3CalendarGlobals.cellHeight)
+                    .attr("width", d3CalendarGlobals.cellWidth())
+                    .attr("height", d3CalendarGlobals.cellHeight())
                     .style("stroke", "#555")
                     .style("fill", "white") 
                     .attr("transform", "translate(" + d3CalendarGlobals.gridXTranslation + "," + d3CalendarGlobals.gridYTranslation + ")");
